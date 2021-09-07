@@ -101,6 +101,20 @@ def randomWait(i, j):
     wait(t)
 
 
+def job_title(driver):
+    position = "Not Found"
+    try:
+        driver.execute_script("window.scrollTo(0, 1500)")
+        wait(2)
+        experience = driver.find_element_by_css_selector(
+            'section.pv-profile-section.experience-section.ember-view').text.splitlines()
+        position = experience[1]
+    except Exception as ex:
+        print(ex)
+
+    return position
+
+
 def findProfiles(driver, company):
     current_url = driver.current_url
     for profile in POSITIONS:
@@ -121,7 +135,7 @@ def findProfiles(driver, company):
                     print(ex)
                     location = "Not Found"
                 profile_heading = driver.find_element_by_css_selector(CSS_SELECTOR['profile_heading']).text
-                position = driver.find_element_by_css_selector(CSS_SELECTOR['desc']).text
+                position = job_title(driver)
                 queryset = UsersData.objects.filter(linkedin_url=profile_url)
 
                 if not len(queryset):
@@ -218,7 +232,7 @@ def linkedinProfiles(driver, sheet_name, tab_name):
     row = 2
     for company in companies:
         try:
-            linkedin_url = company['Company Linkedin']
+            linkedin_url = company['Company LI']
             data_scrapped = company['Linkedin Data Scrapped']
             # company_name = company['SAAS Company Name']
 
@@ -327,14 +341,63 @@ def exportData(sheet_name, tab_name):
     sheet.insert_rows(rows, 2 + n)
 
 
-driver = chrome_driver()
-driver.get("https://www.linkedin.com")
-for cookie in COOKIES:
-    driver.add_cookie(cookie)
+# driver = chrome_driver()
+# driver.get("https://www.linkedin.com")
+# for cookie in COOKIES:
+#     driver.add_cookie(cookie)
+#
+# driver.get("https://www.linkedin.com")
 
-driver.get("https://www.linkedin.com")
-
-linkedinProfiles(driver, SAAS_SHEET, SAAS_TAB1)
-scrapEmpsData(driver)
+# linkedinProfiles(driver, SAAS_SHEET, SAAS_TAB1)
+# linkedinProfiles(driver, "Default Data - Automation Scrapper", "Input - Android Data")
+# scrapEmpsData(driver)
 extractValidEmails()
-exportData(SAAS_SHEET, "All Data")
+# exportData(SAAS_SHEET, "All Data")
+
+
+def export_companies(sheet_name, tab_name):
+    qs = Companies.objects.all()
+
+    rows_data = []
+
+    for item in qs:
+        rows_data.append([item.name])
+
+    all_data, sheet = sheet_data(sheet_name, tab_name)
+    n = len(all_data)
+
+    sheet.insert_rows(rows_data, n+2)
+
+
+# export_companies(SAAS_SHEET, "Companies")
+
+def remove_data():
+    all_data, sheet = sheet_data(SAAS_SHEET, "Prospects")
+
+    linkedin_urls = []
+
+    for data in all_data:
+        url = data['Linkedin Profile']
+        linkedin_urls.append(url)
+
+    print(len(linkedin_urls))
+    linkedin_urls = set(linkedin_urls)
+    print(len(linkedin_urls))
+
+    # for url in linkedin_urls:
+    #     print(url)
+
+    all_data, sheet = sheet_data(SAAS_SHEET, "All Data")
+
+    row = 2
+    for data in all_data:
+        url = data['Linkedin Url']
+        if url in linkedin_urls:
+            sheet.delete_row(row)
+            print("Removed", url)
+            wait(0.5)
+        else:
+            row += 1
+
+
+# remove_data()

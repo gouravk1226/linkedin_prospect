@@ -40,6 +40,8 @@ XPATHS = {
     'desc': '//*[@id="ember433"]/div[2]/div[2]/div/div[2]',
 }
 
-POSITIONS = ["Founder", "Co-Founder", "CEO", "CMO", "Marketing Head", "SENIOR/SR MARKETING"]
+# POSITIONS = ["Founder", "Co-Founder", "CEO", "CMO", "Marketing Head", "SENIOR/SR MARKETING"]
+POSITIONS = ["Founder", "Owner", "Co-Founder", "CEO", "CTO", "Head of Business Development",
+             "Senior tech specialist", "Director of product", "HR Lead"]
 
 
