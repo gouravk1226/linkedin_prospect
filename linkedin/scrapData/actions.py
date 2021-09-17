@@ -436,6 +436,7 @@ def more_button(driver, request_sent, message):
 
         i = 1
         for item in driver.find_elements_by_css_selector(CSS_SELECTOR['more_button_dropdown']):
+            print(item.text)
             if item.text == "Connect":
                 item.click()
                 random_wait(2, 5)
