@@ -3,7 +3,7 @@ from selenium import webdriver
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from .constants import scope, CREDS_FILE_LOCATION, headers, CSS_SELECTOR, POSITIONS, XPATHS, CLASS_NAMES, SAAS_SHEET, \
-    SAAS_TAB1, COOKIES, JOB_SHEET, TABS
+    SAAS_TAB1, COOKIES, JOB_SHEET, TABS, message
 import requests
 from bs4 import BeautifulSoup
 import time
@@ -15,6 +15,11 @@ def wait(t):
     time.sleep(t)
 
 
+def random_wait(a, b):
+    t = random.randint(a, b)
+    wait(t)
+
+
 def chrome_driver():
     driver_location = "/usr/bin/chromedriver"
     binary_location = "/usr/bin/google-chrome"
@@ -23,7 +28,7 @@ def chrome_driver():
     options.binary_location = binary_location
     web_driver = webdriver.Chrome(executable_path=driver_location, chrome_options=options)
     web_driver.maximize_window()
-    web_driver.implicitly_wait(5)
+    web_driver.implicitly_wait(15)
     return web_driver
 
 
@@ -51,10 +56,13 @@ def findCompanyLinkedinUrl(soup):
     all_links = soup.find_all("a")
 
     for link in all_links:
-        url = link['href']
+        try:
+            url = link['href']
 
-        if "linkedin.com/company" in url:
-            return url
+            if "linkedin.com/company" in url:
+                return url
+        except:
+            pass
 
     return "NA"
 
@@ -68,12 +76,12 @@ def getSheetData(sheet_name, tab_name):
             company_website = data['Website']
             linkedin_url = data['Company Linkedin']
 
-            if not len(linkedin_url) and row > 187:
-                print(row, company_website)
+            if not len(linkedin_url):
                 response = requests.get("{}".format(company_website), headers)
                 soup = BeautifulSoup(response.text, 'lxml')
                 company_linkedin = findCompanyLinkedinUrl(soup)
-                sheet.update_cell(row, 3, company_linkedin)
+                print(row, company_website, company_linkedin)
+                sheet.update_cell(row, 7, company_linkedin)
 
         except Exception as ex:
             print(ex)
@@ -104,15 +112,37 @@ def randomWait(i, j):
 def job_title(driver):
     position = "Not Found"
     try:
-        driver.execute_script("window.scrollTo(0, 1500)")
-        wait(2)
-        experience = driver.find_element_by_css_selector(
-            'section.pv-profile-section.experience-section.ember-view').text.splitlines()
+        for i in range(15):
+            driver.execute_script(f"window.scrollTo(0, {i*100})")
+            wait(0.1)
+        driver.execute_script("window.scrollTo(0, 0)")
+        for i in range(15):
+            driver.execute_script(f"window.scrollTo(0, {i*100})")
+            wait(0.1)
+        experience = driver.find_element_by_css_selector('section.pv-profile-section.experience-section.ember-view').text.splitlines()
         position = experience[1]
+        if position == "Company Name":
+            position = experience[6]
     except Exception as ex:
         print(ex)
 
     return position
+
+
+def correct_job_title(driver, sheet_name, tab_name):
+    all_data, sheet = sheet_data(sheet_name, tab_name)
+
+    row = 2
+    for data in all_data:
+        print(row)
+        title = data['Job Title']
+        if title == "Not Found" or title == "Company Name":
+            url = data['Linkedin Profile Url']
+            driver.get(url)
+            position = job_title(driver)
+            sheet.update_cell(row, 3, position)
+
+        row += 1
 
 
 def findProfiles(driver, company):
@@ -169,7 +199,7 @@ def extractDomain(website):
     return domain
 
 
-def companyInfo(driver):
+def companyInfo(driver, tab_name):
 
     try:
         linkedin_url = driver.current_url
@@ -202,7 +232,7 @@ def companyInfo(driver):
 
         instance = Companies(name=company_name, tagline=tagline, industry=industry,
                              location=location, followers=followers, employees=employees,
-                             linkedin_url=linkedin_url, domain=website)
+                             linkedin_url=linkedin_url, domain=website, keyword=tab_name)
 
         instance.save()
         print(company_name, instance, location, followers, website, employees)
@@ -213,6 +243,7 @@ def companyInfo(driver):
 
 def scrapEmpsData(driver):
     all_companies = Companies.objects.filter(data_scrapped="No")
+    print(len(all_companies))
 
     for company in all_companies:
         driver.get(company.linkedin_url)
@@ -232,7 +263,7 @@ def linkedinProfiles(driver, sheet_name, tab_name):
     row = 2
     for company in companies:
         try:
-            linkedin_url = company['Company LI']
+            linkedin_url = company['Company Linkedin']
             data_scrapped = company['Linkedin Data Scrapped']
             # company_name = company['SAAS Company Name']
 
@@ -241,12 +272,12 @@ def linkedinProfiles(driver, sheet_name, tab_name):
 
                 if not len(queryset):
                     driver.get(linkedin_url)
-                    companyInfo(driver)
-                    sheet.update_cell(row, 4, "Yes")
+                    companyInfo(driver, tab_name)
+                    sheet.update_cell(row, 8, "Yes")
                     wait(5)
                 else:
                     print(linkedin_url, " - Data is already scrapped")
-                    sheet.update_cell(row, 4, "Yes")
+                    sheet.update_cell(row, 8, "Yes")
 
         except Exception as ex:
             print(ex)
@@ -273,15 +304,14 @@ def findValidEmails(first_name, last_name, domain):
     guess_email2 = "{}.{}@{}".format(first_name, last_name, domain)
     guess_email3 = "{}_{}@{}".format(first_name, last_name, domain)
     guess_email4 = "{}{}@{}".format(first_name, last_name, domain)
-    guess_email5 = "{}{}@{}".format(first_name[0], last_name, domain)
-    guess_email6 = "{}{}@{}".format(first_name, last_name[0], domain)
-    guess_email7 = "{}.{}@{}".format(first_name, last_name[0], domain)
-    guess_email8 = "{}.{}@{}".format(first_name[0], last_name[0], domain)
-    guess_email9 = "{}{}@{}".format(first_name[0], last_name[0], domain)
-    guess_email10 = "{}@{}".format(last_name, domain)
+    # guess_email5 = "{}{}@{}".format(first_name[0], last_name, domain)
+    # guess_email6 = "{}{}@{}".format(first_name, last_name[0], domain)
+    # guess_email7 = "{}.{}@{}".format(first_name, last_name[0], domain)
+    # guess_email8 = "{}.{}@{}".format(first_name[0], last_name[0], domain)
+    # guess_email9 = "{}{}@{}".format(first_name[0], last_name[0], domain)
+    # guess_email10 = "{}@{}".format(last_name, domain)
 
-    all_guessed_emails = [guess_email1, guess_email2, guess_email3, guess_email4, guess_email5,
-                          guess_email6, guess_email7, guess_email8, guess_email9, guess_email10]
+    all_guessed_emails = [guess_email1, guess_email2, guess_email3, guess_email4]
 
     valid_emails = verifiedMails(all_guessed_emails)
 
@@ -290,6 +320,7 @@ def findValidEmails(first_name, last_name, domain):
 
 def extractValidEmails():
     users = UsersData.objects.filter(valid_emails="NA")
+    print(len(users))
 
     for user in users:
         try:
@@ -321,38 +352,162 @@ def extractValidEmails():
 
 
 def exportData(sheet_name, tab_name):
+    companies_list = []
+    keywords = ["Ad and Marketing Agencies"]
+    # keywords = ["React-India", "Python-India"]
+
+    for item in keywords:
+        companies = Companies.objects.filter(keyword=item)
+
+        for company in companies:
+            company_name = company.name
+            companies_list.append(company_name)
+
+    print(len(companies_list))
+
     all_data, sheet = sheet_data(sheet_name, tab_name)
     n = len(all_data)
-    queryset = UsersData.objects.exclude(valid_emails="NA").exclude(exported="Yes")
+    queryset = UsersData.objects.exclude(exported="No").exclude(valid_emails="NA")
 
     rows = []
     row = 1
     for item in queryset:
-        row_data = [str(item.company), str(item.name), str(item.title), str(item.location), str(item.linkedin_url),
-                    str(item.valid_emails)]
-        # print(row)
-        rows.append(row_data)
-        # sheet.insert_row(row_data, n + row)
-        # row += 1
-        # wait(0.5)
-        item.exported = "Yes"
-        item.save()
+        company_name = str(item.company)
+
+        if company_name in companies_list:
+            employees = str(item.company.employees)
+            industry = str(item.company.industry)
+            domain = str(item.company.domain)
+            row_data = [str(item.name), str(item.title), company_name, str(item.linkedin_url), str(item.location),
+                        employees, industry, domain, str(item.valid_emails)]
+            # row_data = [str(item.company), str(item.name), str(item.title), str(item.location), str(item.linkedin_url),
+            #             employees, str(item.valid_emails)]
+            print(row_data)
+            # print(row)
+            rows.append(row_data)
+            # sheet.insert_row(row_data, n + row)
+            # row += 1
+            # wait(0.5)
+            item.exported = "Yes"
+            item.save()
 
     sheet.insert_rows(rows, 2 + n)
 
 
-# driver = chrome_driver()
-# driver.get("https://www.linkedin.com")
-# for cookie in COOKIES:
-#     driver.add_cookie(cookie)
-#
-# driver.get("https://www.linkedin.com")
+def add_note(driver, request_sent, message):
+    try:
+        # add note
+        driver.find_element_by_css_selector(CSS_SELECTOR['add_note_button']).click()
 
-# linkedinProfiles(driver, SAAS_SHEET, SAAS_TAB1)
-# linkedinProfiles(driver, "Default Data - Automation Scrapper", "Input - Android Data")
+        note_area = driver.find_element_by_css_selector(CSS_SELECTOR['note_area'])
+        random_wait(2, 5)
+        print(message)
+        note_area.send_keys(message)
+
+        # send button
+        driver.find_element_by_css_selector(CSS_SELECTOR['send_button']).click()
+        request_sent = True
+        random_wait(2, 5)
+        return request_sent
+    except:
+        return request_sent
+
+
+def inside_connect_button(driver, request_sent, message):
+    try:
+        driver.find_element_by_css_selector(CSS_SELECTOR['connect_inside_button']).click()
+        random_wait(2, 5)
+        request_sent = add_note(driver, request_sent, message)
+        return request_sent
+
+    except:
+        return request_sent
+
+
+def more_button(driver, request_sent, message):
+    try:
+        # Click on more button
+        j = 0
+        for item in driver.find_elements_by_css_selector(CSS_SELECTOR['more_button']):
+            if j == 1:
+                item.click()
+            j += 1
+        random_wait(2, 5)
+
+        i = 1
+        for item in driver.find_elements_by_css_selector(CSS_SELECTOR['more_button_dropdown']):
+            if item.text == "Connect":
+                item.click()
+                random_wait(2, 5)
+            i += 1
+
+        request_sent = inside_connect_button(driver, request_sent, message)
+        return request_sent
+
+    except:
+        return request_sent
+
+
+def check_user(driver, message):
+    request_sent = False
+    try:
+        random_wait(2, 5)
+        buttons = driver.find_element_by_class_name('pvs-profile-actions ').text.splitlines()
+        if buttons[0].lower() == "message":
+            request_sent = more_button(driver, request_sent, message)
+
+        else:
+            driver.find_element_by_css_selector(CSS_SELECTOR['connect_button']).click()
+            random_wait(2, 5)
+            request_sent = add_note(driver, request_sent, message)
+
+        return request_sent
+    except:
+        return request_sent
+
+
+def send_connection_request(driver, sheet_name, tab_name):
+    all_data, sheet = sheet_data(sheet_name, tab_name)
+
+    row = 2
+    for data in all_data:
+        li_url = data['LinkedinUrl']
+        already_sent = data['Linkedin Request Sent']
+
+        try:
+            if len(li_url) and not len(already_sent):
+                print(row, li_url)
+                driver.get(li_url)
+                first_name = driver.find_element_by_css_selector(CSS_SELECTOR['profile_heading']).text.split(" ")[0]
+                if check_user(driver, message.format(first_name)):
+                    sheet.update_cell(row, 9, "Yes")
+                else:
+                    sheet.update_cell(row, 9, "Not able to sent")
+
+        except:
+            sheet.update_cell(row, 9, "Not able to sent")
+
+        row += 1
+
+
+driver = chrome_driver()
+
+driver.get("https://www.linkedin.com")
+for cookie in COOKIES:
+    driver.add_cookie(cookie)
+
+driver.get("https://www.linkedin.com")
+send_connection_request(driver, "Linkedin Requests", "Sheet1")
+# # # correct_job_title(driver, "Job Portals Data", "Android-Linkedin-India")
+# #
+# linkedinProfiles(driver, "Bowstring Data Scraping - Automation Sheet", "Ad and Marketing Agencies")
+# linkedinProfiles(driver, "Job Portals Data", "React-India")
+# linkedinProfiles(driver, "Job Portals Data", "Python-India")
 # scrapEmpsData(driver)
-extractValidEmails()
-# exportData(SAAS_SHEET, "All Data")
+# extractValidEmails()
+# exportData("Bowstring Data Scraping - Automation Sheet", "Marketing Companies Linkedin ")
+# getSheetData("Clutch Data", "Mobile App Development - India")
+# driver.close()
 
 
 def export_companies(sheet_name, tab_name):

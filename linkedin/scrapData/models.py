@@ -12,6 +12,7 @@ class Companies(models.Model):
     linkedin_url = models.CharField(max_length=255, unique=True)
     domain = models.CharField(max_length=255, default="NA")
     data_scrapped = models.CharField(max_length=50, default="No")
+    keyword = models.CharField(max_length=255, default="NA")
 
     class Meta:
         verbose_name_plural = "Companies Data"
