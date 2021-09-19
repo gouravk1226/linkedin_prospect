@@ -28,7 +28,7 @@ def chrome_driver():
     options.binary_location = binary_location
     web_driver = webdriver.Chrome(executable_path=driver_location, chrome_options=options)
     web_driver.maximize_window()
-    web_driver.implicitly_wait(15)
+    web_driver.implicitly_wait(5)
     return web_driver
 
 
@@ -67,13 +67,13 @@ def findCompanyLinkedinUrl(soup):
     return "NA"
 
 
-def getSheetData(sheet_name, tab_name):
+def getSheetData(sheet_name, tab_name, column_number):
     all_data, sheet = sheet_data(sheet_name, tab_name)
 
     row = 2
     for data in all_data:
         try:
-            company_website = data['Website']
+            company_website = "https://" + data['Website']
             linkedin_url = data['Company Linkedin']
 
             if not len(linkedin_url):
@@ -81,7 +81,7 @@ def getSheetData(sheet_name, tab_name):
                 soup = BeautifulSoup(response.text, 'lxml')
                 company_linkedin = findCompanyLinkedinUrl(soup)
                 print(row, company_website, company_linkedin)
-                sheet.update_cell(row, 7, company_linkedin)
+                sheet.update_cell(row, column_number, company_linkedin)
 
         except Exception as ex:
             print(ex)
@@ -99,7 +99,8 @@ def clickOnAllEmployees(driver):
         clicked = True
 
     except Exception as ex:
-        print(ex)
+        # print(ex)
+        pass
 
     return clicked
 
@@ -124,7 +125,8 @@ def job_title(driver):
         if position == "Company Name":
             position = experience[6]
     except Exception as ex:
-        print(ex)
+        # print(ex)
+        pass
 
     return position
 
@@ -162,7 +164,7 @@ def findProfiles(driver, company):
                     location = driver.find_element_by_css_selector(
                         "span.text-body-small.inline.t-black--light.break-words").text
                 except Exception as ex:
-                    print(ex)
+                    # print(ex)
                     location = "Not Found"
                 profile_heading = driver.find_element_by_css_selector(CSS_SELECTOR['profile_heading']).text
                 position = job_title(driver)
@@ -170,7 +172,7 @@ def findProfiles(driver, company):
 
                 if not len(queryset):
                     instance = UsersData(company=company, name=profile_heading, title=position, location=location,
-                                         linkedin_url=profile_url)
+                                         linkedin_url=profile_url, keyword=profile)
 
                     instance.save()
                     print(profile_heading, profile_url, "Saved Data")
@@ -180,7 +182,8 @@ def findProfiles(driver, company):
                 driver.get(new_url)
                 randomWait(4, 8)
         except Exception as ex:
-            print(ex)
+            # print(ex)
+            pass
 
     return 0
 
@@ -238,7 +241,8 @@ def companyInfo(driver, tab_name):
         print(company_name, instance, location, followers, website, employees)
 
     except Exception as ex:
-        print(ex)
+        # print(ex)
+        pass
 
 
 def scrapEmpsData(driver):
@@ -257,7 +261,7 @@ def scrapEmpsData(driver):
         company.save()
 
 
-def linkedinProfiles(driver, sheet_name, tab_name):
+def linkedinProfiles(driver, sheet_name, tab_name, column_number):
     companies, sheet = sheet_data(sheet_name, tab_name)
 
     row = 2
@@ -273,11 +277,11 @@ def linkedinProfiles(driver, sheet_name, tab_name):
                 if not len(queryset):
                     driver.get(linkedin_url)
                     companyInfo(driver, tab_name)
-                    sheet.update_cell(row, 8, "Yes")
+                    sheet.update_cell(row, column_number, "Yes")
                     wait(5)
                 else:
                     print(linkedin_url, " - Data is already scrapped")
-                    sheet.update_cell(row, 8, "Yes")
+                    sheet.update_cell(row, column_number, "Yes")
 
         except Exception as ex:
             print(ex)
@@ -378,7 +382,7 @@ def exportData(sheet_name, tab_name):
             employees = str(item.company.employees)
             industry = str(item.company.industry)
             domain = str(item.company.domain)
-            row_data = [str(item.name), str(item.title), company_name, str(item.linkedin_url), str(item.location),
+            row_data = [str(item.name), str(item.keyword), str(item.title), company_name, str(item.linkedin_url), str(item.location),
                         employees, industry, domain, str(item.valid_emails)]
             # row_data = [str(item.company), str(item.name), str(item.title), str(item.location), str(item.linkedin_url),
             #             employees, str(item.valid_emails)]
@@ -401,8 +405,9 @@ def add_note(driver, request_sent, message):
 
         note_area = driver.find_element_by_css_selector(CSS_SELECTOR['note_area'])
         random_wait(2, 5)
-        print(message)
+        # print(message)
         note_area.send_keys(message)
+        random_wait(2, 5)
 
         # send button
         driver.find_element_by_css_selector(CSS_SELECTOR['send_button']).click()
@@ -436,7 +441,7 @@ def more_button(driver, request_sent, message):
 
         i = 1
         for item in driver.find_elements_by_css_selector(CSS_SELECTOR['more_button_dropdown']):
-            print(item.text)
+            # print(item.text)
             if item.text == "Connect":
                 item.click()
                 random_wait(2, 5)
@@ -467,10 +472,11 @@ def check_user(driver, message):
         return request_sent
 
 
-def send_connection_request(driver, sheet_name, tab_name):
+def send_connection_request(driver, sheet_name, tab_name, connect_limit):
     all_data, sheet = sheet_data(sheet_name, tab_name)
 
     row = 2
+    count = 0
     for data in all_data:
         li_url = data['LinkedinUrl']
         already_sent = data['Linkedin Request Sent']
@@ -480,8 +486,10 @@ def send_connection_request(driver, sheet_name, tab_name):
                 print(row, li_url)
                 driver.get(li_url)
                 first_name = driver.find_element_by_css_selector(CSS_SELECTOR['profile_heading']).text.split(" ")[0]
-                if check_user(driver, message.format(first_name)):
+                if check_user(driver, message.format(first_name)) and count < connect_limit:
+                    print("Follow count - ", count)
                     sheet.update_cell(row, 9, "Yes")
+                    count += 1
                 else:
                     sheet.update_cell(row, 9, "Not able to sent")
 
@@ -489,26 +497,6 @@ def send_connection_request(driver, sheet_name, tab_name):
             sheet.update_cell(row, 9, "Not able to sent")
 
         row += 1
-
-
-driver = chrome_driver()
-
-driver.get("https://www.linkedin.com")
-for cookie in COOKIES:
-    driver.add_cookie(cookie)
-
-driver.get("https://www.linkedin.com")
-send_connection_request(driver, "Linkedin Requests", "Sheet1")
-# # # correct_job_title(driver, "Job Portals Data", "Android-Linkedin-India")
-# #
-# linkedinProfiles(driver, "Bowstring Data Scraping - Automation Sheet", "Ad and Marketing Agencies")
-# linkedinProfiles(driver, "Job Portals Data", "React-India")
-# linkedinProfiles(driver, "Job Portals Data", "Python-India")
-# scrapEmpsData(driver)
-# extractValidEmails()
-# exportData("Bowstring Data Scraping - Automation Sheet", "Marketing Companies Linkedin ")
-# getSheetData("Clutch Data", "Mobile App Development - India")
-# driver.close()
 
 
 def export_companies(sheet_name, tab_name):

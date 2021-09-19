@@ -28,6 +28,7 @@ class UsersData(models.Model):
     location = models.CharField(max_length=255, default="NA")
     linkedin_url = models.CharField(max_length=255, unique=True)
     valid_emails = models.TextField(default="NA")
+    keyword = models.CharField(max_length=255, default="NA")
     exported = models.CharField(max_length=255, default="NA")
 
     class Meta:
