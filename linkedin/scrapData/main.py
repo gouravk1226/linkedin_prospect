@@ -1,9 +1,10 @@
 from .actions import chrome_driver, send_connection_request, linkedinProfiles, correct_job_title, \
-    scrapEmpsData, extractValidEmails, exportData, getSheetData
+    scrapEmpsData, extractValidEmails, exportData, getSheetData, demo
 from .constants import COOKIES
 
 
 def start_bot():
+    # demo()
     driver = chrome_driver()
 
     driver.get("https://www.linkedin.com")
@@ -14,12 +15,13 @@ def start_bot():
     # send_connection_request(driver, "Linkedin Requests", "Sheet1", 20)
     # correct_job_title(driver, "Job Portals Data", "Android-Linkedin-India")
 
-    linkedinProfiles(driver, "GoodFirm Companies Outside India", "Java", 8)
-    scrapEmpsData(driver)
+    # linkedinProfiles(driver, "GoodFirm Companies Outside India", "Java", 8)
+    # linkedinProfiles(driver, "Default Data - Automation Scrapper", "Input - Android Data", 4)
+    # scrapEmpsData(driver)
     # extractValidEmails()
-    # exportData("Bowstring Data Scraping - Automation Sheet", "Marketing Companies Linkedin ")
-    # getSheetData("Job Portals Data", "Android-India", 6)
-    driver.close()
+    # exportData("Default Data - Automation Scrapper", "Linkedin-Users-Data")
+    # getSheetData("Default Data - Automation Scrapper", "Input - Android Data", 4)
+    # driver.close()
 
 
 start_bot()
