@@ -357,7 +357,7 @@ def extractValidEmails():
 
 def exportData(sheet_name, tab_name):
     companies_list = []
-    keywords = ["Ad and Marketing Agencies"]
+    keywords = ["Input - Android Data"]
     # keywords = ["React-India", "Python-India"]
 
     for item in keywords:
@@ -371,10 +371,9 @@ def exportData(sheet_name, tab_name):
 
     all_data, sheet = sheet_data(sheet_name, tab_name)
     n = len(all_data)
-    queryset = UsersData.objects.exclude(exported="No").exclude(valid_emails="NA")
+    queryset = UsersData.objects.exclude(exported="Yes")
 
     rows = []
-    row = 1
     for item in queryset:
         company_name = str(item.company)
 
@@ -382,16 +381,13 @@ def exportData(sheet_name, tab_name):
             employees = str(item.company.employees)
             industry = str(item.company.industry)
             domain = str(item.company.domain)
-            row_data = [str(item.name), str(item.keyword), str(item.title), company_name, str(item.linkedin_url), str(item.location),
-                        employees, industry, domain, str(item.valid_emails)]
-            # row_data = [str(item.company), str(item.name), str(item.title), str(item.location), str(item.linkedin_url),
-            #             employees, str(item.valid_emails)]
+            first_name = str(item.name).split(" ")[0]
+            last_name = str(item.name).split(" ")[1]
+            row_data = [first_name, last_name, str(item.keyword), str(item.title), company_name, str(item.linkedin_url), str(item.location),
+                        employees, industry, domain]
+
             print(row_data)
-            # print(row)
             rows.append(row_data)
-            # sheet.insert_row(row_data, n + row)
-            # row += 1
-            # wait(0.5)
             item.exported = "Yes"
             item.save()
 
@@ -542,6 +538,14 @@ def remove_data():
             wait(0.5)
         else:
             row += 1
+
+
+def demo():
+    cm = Companies.objects.all()
+    qs = UsersData.objects.all()
+
+    print(len(qs))
+    print(len(cm))
 
 
 # remove_data()
