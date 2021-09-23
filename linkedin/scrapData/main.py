@@ -5,13 +5,13 @@ from .constants import COOKIES
 
 def start_bot():
     # demo()
-    driver = chrome_driver()
-
-    driver.get("https://www.linkedin.com")
-    for cookie in COOKIES['website_design']:
-        driver.add_cookie(cookie)
-
-    driver.get("https://www.linkedin.com")
+    # driver = chrome_driver()
+    #
+    # driver.get("https://www.linkedin.com")
+    # for cookie in COOKIES['website_design']:
+    #     driver.add_cookie(cookie)
+    #
+    # driver.get("https://www.linkedin.com")
     # send_connection_request(driver, "Linkedin Requests", "Sheet1", 20)
     # correct_job_title(driver, "Job Portals Data", "Android-Linkedin-India")
 
