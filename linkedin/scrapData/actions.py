@@ -73,7 +73,7 @@ def getSheetData(sheet_name, tab_name, column_number):
     row = 2
     for data in all_data:
         try:
-            company_website = "https://" + data['Website']
+            company_website = data['Website']
             linkedin_url = data['Company Linkedin']
 
             if not len(linkedin_url):
@@ -246,7 +246,7 @@ def companyInfo(driver, tab_name):
 
 
 def scrapEmpsData(driver):
-    all_companies = Companies.objects.filter(data_scrapped="No")
+    all_companies = Companies.objects.filter(data_scrapped="No")[:100]
     print(len(all_companies))
 
     for company in all_companies:
@@ -271,14 +271,14 @@ def linkedinProfiles(driver, sheet_name, tab_name, column_number):
             data_scrapped = company['Linkedin Data Scrapped']
             # company_name = company['SAAS Company Name']
 
-            if len(linkedin_url) and linkedin_url != "NA" and not len(data_scrapped):
+            if len(linkedin_url) and linkedin_url != "NA" and not len(data_scrapped) and row > 1391:
                 queryset = Companies.objects.filter(linkedin_url=linkedin_url)
 
                 if not len(queryset):
                     driver.get(linkedin_url)
                     companyInfo(driver, tab_name)
                     sheet.update_cell(row, column_number, "Yes")
-                    wait(5)
+                    wait(1)
                 else:
                     print(linkedin_url, " - Data is already scrapped")
                     sheet.update_cell(row, column_number, "Yes")
@@ -357,7 +357,7 @@ def extractValidEmails():
 
 def exportData(sheet_name, tab_name):
     companies_list = []
-    keywords = ["Input - Android Data"]
+    keywords = ["Service Companies", "Service Web", "Service Web US"]
     # keywords = ["React-India", "Python-India"]
 
     for item in keywords:
@@ -478,11 +478,11 @@ def send_connection_request(driver, sheet_name, tab_name, connect_limit):
         already_sent = data['Linkedin Request Sent']
 
         try:
-            if len(li_url) and not len(already_sent):
+            if len(li_url) and not len(already_sent) and count < connect_limit:
                 print(row, li_url)
                 driver.get(li_url)
                 first_name = driver.find_element_by_css_selector(CSS_SELECTOR['profile_heading']).text.split(" ")[0]
-                if check_user(driver, message.format(first_name)) and count < connect_limit:
+                if check_user(driver, message.format(first_name)):
                     print("Follow count - ", count)
                     sheet.update_cell(row, 9, "Yes")
                     count += 1
