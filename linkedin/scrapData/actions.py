@@ -246,7 +246,7 @@ def companyInfo(driver, tab_name):
 
 
 def scrapEmpsData(driver):
-    all_companies = Companies.objects.filter(data_scrapped="No")[:100]
+    all_companies = Companies.objects.filter(data_scrapped="No")[2:100]
     print(len(all_companies))
 
     for company in all_companies:
@@ -271,7 +271,7 @@ def linkedinProfiles(driver, sheet_name, tab_name, column_number):
             data_scrapped = company['Linkedin Data Scrapped']
             # company_name = company['SAAS Company Name']
 
-            if len(linkedin_url) and linkedin_url != "NA" and not len(data_scrapped) and row > 1391:
+            if len(linkedin_url) and linkedin_url != "NA" and not len(data_scrapped):
                 queryset = Companies.objects.filter(linkedin_url=linkedin_url)
 
                 if not len(queryset):
