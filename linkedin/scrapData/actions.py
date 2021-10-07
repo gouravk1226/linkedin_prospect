@@ -157,7 +157,10 @@ def findProfiles(driver, company):
             results = int(driver.find_element_by_css_selector(CSS_SELECTOR['result']).text.split(" ")[0])
 
             for item in range(1, results + 1):
-                driver.find_element_by_xpath(XPATHS['results'].format(item)).click()
+                target = driver.find_element_by_xpath(XPATHS['results'].format(item)).get_attribute('href')
+                target = target.split("?miniProfile")[0]
+                print(target)
+                driver.get(target)
                 randomWait(4, 8)
                 profile_url = driver.current_url
                 try:
@@ -246,7 +249,7 @@ def companyInfo(driver, tab_name):
 
 
 def scrapEmpsData(driver):
-    all_companies = Companies.objects.filter(data_scrapped="No")[2:100]
+    all_companies = Companies.objects.filter(data_scrapped="No").filter(keyword="BSS - Wordpress")
     print(len(all_companies))
 
     for company in all_companies:
@@ -267,7 +270,7 @@ def linkedinProfiles(driver, sheet_name, tab_name, column_number):
     row = 2
     for company in companies:
         try:
-            linkedin_url = company['Company Linkedin']
+            linkedin_url = company['Automation LinkedIn']
             data_scrapped = company['Linkedin Data Scrapped']
             # company_name = company['SAAS Company Name']
 
@@ -357,8 +360,8 @@ def extractValidEmails():
 
 def exportData(sheet_name, tab_name):
     companies_list = []
-    keywords = ["Service Companies", "Service Web", "Service Web US"]
-    # keywords = ["React-India", "Python-India"]
+    keywords = ["D-React-Software Development"]
+    # keywords = ["BSS - Wordpress"]
 
     for item in keywords:
         companies = Companies.objects.filter(keyword=item)

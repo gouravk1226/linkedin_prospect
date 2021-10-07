@@ -7,19 +7,24 @@ def start_bot():
     driver = chrome_driver()
 
     driver.get("https://www.linkedin.com")
-    for cookie in COOKIES['sahil']:
+    for cookie in COOKIES['website_design']:
         driver.add_cookie(cookie)
 
     driver.get("https://www.linkedin.com")
 
-    send_connection_request(driver, "Linkedin Requests", "Sheet1", 20)
+    # send_connection_request(driver, "Linkedin Requests", "Sheet1", 20)
     # correct_job_title(driver, "Job Portals Data", "Android-Linkedin-India")
 
-    # linkedinProfiles(driver, "GoodFirm Companies Outside India", "Python", 8)
+    # linkedinProfiles(driver, "Monster1", "wordpress developer", 9)
+    # linkedinProfiles(driver, "Monster1", "React developer", 9)
+    # linkedinProfiles(driver, "Monster1", "Sales and marketing", 9)
+    # linkedinProfiles(driver, "Monster1", "Android developer", 9)
+    # linkedinProfiles(driver, "Monster1", "Django developer", 9)
     # linkedinProfiles(driver, "Default Data - Automation Scrapper", "Input - Android Data", 4)
-    # scrapEmpsData(driver)
+    scrapEmpsData(driver)
     # extractValidEmails()
-    # exportData("Default Data - Automation Scrapper", "Service-Companies-Employers")
+    # exportData("Goodfirms Data", "D-React-Software Development-LI-Users")
+    # exportData("Goodfirms Data", "BSS - Wordpress - LI - Users")
     # getSheetData("GoodFirm Companies Outside India", "Service Web US", 7)
     driver.close()
 
