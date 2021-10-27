@@ -25,6 +25,8 @@ def chrome_driver():
     binary_location = "/usr/bin/google-chrome"
 
     options = webdriver.ChromeOptions()
+    options.add_argument("--headless")
+    options.add_argument("--window-size=1920,1080")
     options.binary_location = binary_location
     web_driver = webdriver.Chrome(executable_path=driver_location, chrome_options=options)
     web_driver.maximize_window()
@@ -84,7 +86,8 @@ def getSheetData(sheet_name, tab_name, column_number):
                 sheet.update_cell(row, column_number, company_linkedin)
 
         except Exception as ex:
-            print(ex)
+            # print(ex)
+            pass
         row += 1
 
 
@@ -249,19 +252,21 @@ def companyInfo(driver, tab_name):
 
 
 def scrapEmpsData(driver):
-    all_companies = Companies.objects.filter(data_scrapped="No").filter(keyword="BSS - Wordpress")
-    print(len(all_companies))
+    keywords = ["BSS-Marketing", "D-Python-Software Development", "BSS-Design", "D-android-mobile app"]
+    for keyword in keywords:
+        all_companies = Companies.objects.filter(data_scrapped="No").filter(keyword=keyword)
+        print(len(all_companies))
 
-    for company in all_companies:
-        driver.get(company.linkedin_url)
-        randomWait(2, 6)
+        for company in all_companies:
+            driver.get(company.linkedin_url)
+            randomWait(2, 6)
 
-        if clickOnAllEmployees(driver):
-            findProfiles(driver, company)
-        else:
-            pass
-        company.data_scrapped = "Yes"
-        company.save()
+            if clickOnAllEmployees(driver):
+                findProfiles(driver, company)
+            else:
+                pass
+            company.data_scrapped = "Yes"
+            company.save()
 
 
 def linkedinProfiles(driver, sheet_name, tab_name, column_number):
@@ -270,11 +275,12 @@ def linkedinProfiles(driver, sheet_name, tab_name, column_number):
     row = 2
     for company in companies:
         try:
-            linkedin_url = company['Automation LinkedIn']
+            # linkedin_url = company['Automation LinkedIn']
+            linkedin_url = company['Manual LinkedIn']
             data_scrapped = company['Linkedin Data Scrapped']
             # company_name = company['SAAS Company Name']
 
-            if len(linkedin_url) and linkedin_url != "NA" and not len(data_scrapped):
+            if len(linkedin_url) and linkedin_url != "NA" and linkedin_url != "Error" and not len(data_scrapped):
                 queryset = Companies.objects.filter(linkedin_url=linkedin_url)
 
                 if not len(queryset):
@@ -284,7 +290,7 @@ def linkedinProfiles(driver, sheet_name, tab_name, column_number):
                     wait(1)
                 else:
                     print(linkedin_url, " - Data is already scrapped")
-                    sheet.update_cell(row, column_number, "Yes")
+                    sheet.update_cell(row, column_number, "Already Scrapped")
 
         except Exception as ex:
             print(ex)
@@ -360,7 +366,7 @@ def extractValidEmails():
 
 def exportData(sheet_name, tab_name):
     companies_list = []
-    keywords = ["D-React-Software Development"]
+    keywords = ["D-android-mobile app"]
     # keywords = ["BSS - Wordpress"]
 
     for item in keywords:
