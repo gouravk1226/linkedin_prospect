@@ -25,7 +25,7 @@ def chrome_driver():
     binary_location = "/usr/bin/google-chrome"
 
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
+    # options.add_argument("--headless")
     options.add_argument("--window-size=1920,1080")
     options.binary_location = binary_location
     web_driver = webdriver.Chrome(executable_path=driver_location, chrome_options=options)
@@ -252,7 +252,7 @@ def companyInfo(driver, tab_name):
 
 
 def scrapEmpsData(driver):
-    keywords = ["BSS-Marketing", "D-Python-Software Development", "BSS-Design", "D-android-mobile app"]
+    keywords = ["BSS - Wordpress"]
     for keyword in keywords:
         all_companies = Companies.objects.filter(data_scrapped="No").filter(keyword=keyword)
         print(len(all_companies))
@@ -366,7 +366,7 @@ def extractValidEmails():
 
 def exportData(sheet_name, tab_name):
     companies_list = []
-    keywords = ["D-android-mobile app"]
+    keywords = ["BSS - Wordpress"]
     # keywords = ["BSS - Wordpress"]
 
     for item in keywords:
