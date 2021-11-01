@@ -4,13 +4,13 @@ from .constants import COOKIES
 
 
 def start_bot():
-    # driver = chrome_driver()
-    #
-    # driver.get("https://www.linkedin.com")
-    # for cookie in COOKIES['sahil']:
-    #     driver.add_cookie(cookie)
-    #
-    # driver.get("https://www.linkedin.com")
+    driver = chrome_driver()
+
+    driver.get("https://www.linkedin.com")
+    for cookie in COOKIES['sahil']:
+        driver.add_cookie(cookie)
+
+    driver.get("https://www.linkedin.com")
 
     # send_connection_request(driver, "Linkedin Requests", "Sheet1", 20)
     # correct_job_title(driver, "Job Portals Data", "Android-Linkedin-India")
@@ -18,7 +18,7 @@ def start_bot():
     # linkedinProfiles(driver, "Goodfirms Data", "BSS - Wordpress", 9)
     # scrapEmpsData(driver)
     # extractValidEmails()
-    exportData("Test-scraping", "demo")
+    # exportData("Test-scraping", "demo")
     # getSheetData("GoodFirm Companies Outside India", "Service Web US", 7)
     # driver.close()
 
