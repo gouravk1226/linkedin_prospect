@@ -2,7 +2,6 @@ import time
 from selenium import webdriver
 from datetime import datetime
 import pytz
-from utils.common_constants.constants import BRIDGEFIX_SCRAPPER_SHEET_CN
 
 
 def wait(t):
@@ -37,20 +36,3 @@ def match_column(column_name, matched_with, columns, i):
         columns.update({
             column_name: i,
         })
-
-
-def find_column_numbers(data):
-    columns = {}
-    i = 1
-    for column_name in data.keys():
-        match_column(column_name, BRIDGEFIX_SCRAPPER_SHEET_CN['sheet_name'], columns, i)
-        match_column(column_name, BRIDGEFIX_SCRAPPER_SHEET_CN['tab_name'], columns, i)
-        match_column(column_name, BRIDGEFIX_SCRAPPER_SHEET_CN['keyword'], columns, i)
-        match_column(column_name, BRIDGEFIX_SCRAPPER_SHEET_CN['url'], columns, i)
-        match_column(column_name, BRIDGEFIX_SCRAPPER_SHEET_CN['scrapping_start'], columns, i)
-        match_column(column_name, BRIDGEFIX_SCRAPPER_SHEET_CN['scrapping_complete'], columns, i)
-
-        i += 1
-
-    return columns
-

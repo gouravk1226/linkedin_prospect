@@ -156,37 +156,45 @@ def findProfiles(driver, company):
         try:
             new_url = "{}&title={}".format(current_url, profile)
             driver.get(new_url)
-            randomWait(4, 8)
+            randomWait(15, 30)
             results = int(driver.find_element_by_css_selector(CSS_SELECTOR['result']).text.split(" ")[0])
 
             for item in range(1, results + 1):
-                target = driver.find_element_by_xpath(XPATHS['results'].format(item)).get_attribute('href')
+                try:
+                    target = driver.find_element_by_xpath(XPATHS['results'].format(3, item)).get_attribute('href')
+                except:
+                    target = driver.find_element_by_xpath(XPATHS['results'].format(2, item)).get_attribute('href')
                 target = target.split("?miniProfile")[0]
                 print(target)
-                driver.get(target)
-                randomWait(4, 8)
-                profile_url = driver.current_url
-                try:
-                    location = driver.find_element_by_css_selector(
-                        "span.text-body-small.inline.t-black--light.break-words").text
-                except Exception as ex:
-                    # print(ex)
-                    location = "Not Found"
-                profile_heading = driver.find_element_by_css_selector(CSS_SELECTOR['profile_heading']).text
-                position = job_title(driver)
-                queryset = UsersData.objects.filter(linkedin_url=profile_url)
+                queryset = UsersData.objects.filter(linkedin_url=target)
 
                 if not len(queryset):
-                    instance = UsersData(company=company, name=profile_heading, title=position, location=location,
-                                         linkedin_url=profile_url, keyword=profile)
+                    driver.get(target)
+                    randomWait(8, 12)
+                    profile_url = driver.current_url
+                    try:
+                        location = driver.find_element_by_css_selector(
+                            "span.text-body-small.inline.t-black--light.break-words").text
+                    except Exception as ex:
+                        # print(ex)
+                        location = "Not Found"
+                    profile_heading = driver.find_element_by_css_selector(CSS_SELECTOR['profile_heading']).text
+                    position = job_title(driver)
+                    queryset = UsersData.objects.filter(linkedin_url=profile_url)
 
-                    instance.save()
-                    print(profile_heading, profile_url, "Saved Data")
+                    if not len(queryset):
+                        instance = UsersData(company=company, name=profile_heading, title=position, location=location,
+                                             linkedin_url=profile_url, keyword=profile)
 
+                        instance.save()
+                        print(profile_heading, profile_url, "Saved Data")
+
+                    else:
+                        print("User Data is already present", profile_heading)
+                    driver.get(new_url)
+                    randomWait(8, 12)
                 else:
-                    print("User Data is already present", profile_heading)
-                driver.get(new_url)
-                randomWait(4, 8)
+                    print("Already Present")
         except Exception as ex:
             # print(ex)
             pass
@@ -209,7 +217,7 @@ def extractDomain(website):
 
 
 def companyInfo(driver, tab_name):
-
+    is_scrapped = False
     try:
         linkedin_url = driver.current_url
         company_details = driver.find_element_by_css_selector(CSS_SELECTOR['company_detail'])
@@ -244,22 +252,25 @@ def companyInfo(driver, tab_name):
                              linkedin_url=linkedin_url, domain=website, keyword=tab_name)
 
         instance.save()
+        is_scrapped = True
         print(company_name, instance, location, followers, website, employees)
 
     except Exception as ex:
-        # print(ex)
+        # print("Exception - ", ex)
         pass
+
+    return is_scrapped
 
 
 def scrapEmpsData(driver):
-    keywords = ["BSS - Wordpress"]
+    keywords = ["Django-India-All"]
     for keyword in keywords:
         all_companies = Companies.objects.filter(data_scrapped="No").filter(keyword=keyword)
         print(len(all_companies))
 
         for company in all_companies:
             driver.get(company.linkedin_url)
-            randomWait(2, 6)
+            randomWait(4, 10)
 
             if clickOnAllEmployees(driver):
                 findProfiles(driver, company)
@@ -275,18 +286,19 @@ def linkedinProfiles(driver, sheet_name, tab_name, column_number):
     row = 2
     for company in companies:
         try:
-            # linkedin_url = company['Automation LinkedIn']
-            linkedin_url = company['Manual LinkedIn']
-            data_scrapped = company['Linkedin Data Scrapped']
-            # company_name = company['SAAS Company Name']
+            linkedin_url = company['Agency LinkedIn']
+            data_scrapped = company['Linkedin Scrapped']
 
             if len(linkedin_url) and linkedin_url != "NA" and linkedin_url != "Error" and not len(data_scrapped):
+                print(row)
                 queryset = Companies.objects.filter(linkedin_url=linkedin_url)
 
                 if not len(queryset):
                     driver.get(linkedin_url)
-                    companyInfo(driver, tab_name)
-                    sheet.update_cell(row, column_number, "Yes")
+                    if companyInfo(driver, tab_name):
+                        sheet.update_cell(row, column_number, "Yes")
+                    else:
+                        sheet.update_cell(row, column_number, "Already Scrapped")
                     wait(1)
                 else:
                     print(linkedin_url, " - Data is already scrapped")
@@ -365,42 +377,36 @@ def extractValidEmails():
 
 
 def exportData(sheet_name, tab_name):
-    companies_list = []
-    keywords = ["BSS - Wordpress"]
-    # keywords = ["BSS - Wordpress"]
+    keywords = ["Linkedin-jobs-Reactjs"]
+    companies = Companies.objects.filter(keyword__in=keywords)
+    print(len(companies))
+    # all_data, sheet = sheet_data(sheet_name, tab_name)
+    # n = len(all_data)
+    queryset = UsersData.objects.filter(exported="Yes", company__keyword__in=keywords)
+    print(len(queryset))
 
-    for item in keywords:
-        companies = Companies.objects.filter(keyword=item)
-
-        for company in companies:
-            company_name = company.name
-            companies_list.append(company_name)
-
-    print(len(companies_list))
-
-    all_data, sheet = sheet_data(sheet_name, tab_name)
-    n = len(all_data)
-    queryset = UsersData.objects.exclude(exported="Yes")
-
-    rows = []
-    for item in queryset:
-        company_name = str(item.company)
-
-        if company_name in companies_list:
-            employees = str(item.company.employees)
-            industry = str(item.company.industry)
-            domain = str(item.company.domain)
-            first_name = str(item.name).split(" ")[0]
-            last_name = str(item.name).split(" ")[1]
-            row_data = [first_name, last_name, str(item.keyword), str(item.title), company_name, str(item.linkedin_url), str(item.location),
-                        employees, industry, domain]
-
-            print(row_data)
-            rows.append(row_data)
-            item.exported = "Yes"
-            item.save()
-
-    sheet.insert_rows(rows, 2 + n)
+    # rows = []
+    # for item in queryset:
+    #     company_name = str(item.company)
+    #     employees = str(item.company.employees)
+    #     industry = str(item.company.industry)
+    #     domain = str(item.company.domain)
+    #     first_name = str(item.name).split(" ")[0]
+    #     try:
+    #         last_name = str(item.name).split(" ")[1]
+    #     except Exception as ex:
+    #         print(ex)
+    #         last_name = ""
+    #     row_data = [first_name, last_name, str(item.keyword), str(item.title), company_name, str(item.linkedin_url), str(item.location),
+    #                 employees, industry, domain]
+    #
+    #     print(row_data)
+    #     rows.append(row_data)
+    #     item.exported = "Yes"
+    #     item.save()
+    #
+    # print(len(rows))
+    # sheet.insert_rows(rows, 2 + n)
 
 
 def add_note(driver, request_sent, message):
