@@ -4,18 +4,18 @@ from .constants import COOKIES
 
 
 def start_bot():
-    driver = chrome_driver()
+    # driver = chrome_driver()
+    #
+    # driver.get("https://www.linkedin.com")
+    # for cookie in COOKIES['sahil']:
+    #     driver.add_cookie(cookie)
+    #
+    # driver.get("https://www.linkedin.com")
 
-    driver.get("https://www.linkedin.com")
-    for cookie in COOKIES['website_design']:
-        driver.add_cookie(cookie)
-
-    driver.get("https://www.linkedin.com")
-
-    linkedinProfiles(driver, "Sourcing Research Worksheet", "Agencies", 12)
+    # linkedinProfiles(driver, "Sourcing Research Worksheet", "Agencies", 12)
     # scrapEmpsData(driver)
-    # exportData("Prospects", "react js")
-    driver.close()
+    exportData("Prospects", "react js")
+    # driver.close()
 
 
 start_bot()

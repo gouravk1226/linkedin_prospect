@@ -25,7 +25,7 @@ def chrome_driver():
     binary_location = "/usr/bin/google-chrome"
 
     options = webdriver.ChromeOptions()
-    # options.add_argument("--headless")
+    options.add_argument("--headless")
     options.add_argument("--window-size=1920,1080")
     options.binary_location = binary_location
     web_driver = webdriver.Chrome(executable_path=driver_location, chrome_options=options)
@@ -263,9 +263,9 @@ def companyInfo(driver, tab_name):
 
 
 def scrapEmpsData(driver):
-    keywords = ["Django-India-All"]
+    keywords = ["Agencies"]
     for keyword in keywords:
-        all_companies = Companies.objects.filter(data_scrapped="No").filter(keyword=keyword)
+        all_companies = Companies.objects.filter(data_scrapped="No").filter(keyword=keyword)[150:]
         print(len(all_companies))
 
         for company in all_companies:
@@ -377,12 +377,12 @@ def extractValidEmails():
 
 
 def exportData(sheet_name, tab_name):
-    keywords = ["Linkedin-jobs-Reactjs"]
+    keywords = ["Agencies"]
     companies = Companies.objects.filter(keyword__in=keywords)
     print(len(companies))
     # all_data, sheet = sheet_data(sheet_name, tab_name)
     # n = len(all_data)
-    queryset = UsersData.objects.filter(exported="Yes", company__keyword__in=keywords)
+    queryset = UsersData.objects.filter(exported="NA", company__keyword__in=keywords)
     print(len(queryset))
 
     # rows = []
