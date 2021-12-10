@@ -1,20 +1,22 @@
 from .actions import chrome_driver, send_connection_request, linkedinProfiles, correct_job_title, \
     scrapEmpsData, extractValidEmails, exportData, getSheetData, demo
 from .constants import COOKIES
+from .find_valid_email import find_users_valid_email
 
 
 def start_bot():
     # driver = chrome_driver()
     #
     # driver.get("https://www.linkedin.com")
-    # for cookie in COOKIES['sahil']:
+    # for cookie in COOKIES['gajendra']:
     #     driver.add_cookie(cookie)
     #
     # driver.get("https://www.linkedin.com")
 
     # linkedinProfiles(driver, "Sourcing Research Worksheet", "Agencies", 12)
     # scrapEmpsData(driver)
-    exportData("Prospects", "react js")
+    # find_users_valid_email(["Agencies"])
+    exportData("Sourcing Research Worksheet", "Agencies-POCs")
     # driver.close()
 
 

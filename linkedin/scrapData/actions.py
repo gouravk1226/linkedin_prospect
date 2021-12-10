@@ -380,33 +380,34 @@ def exportData(sheet_name, tab_name):
     keywords = ["Agencies"]
     companies = Companies.objects.filter(keyword__in=keywords)
     print(len(companies))
-    # all_data, sheet = sheet_data(sheet_name, tab_name)
-    # n = len(all_data)
+    all_data, sheet = sheet_data(sheet_name, tab_name)
+    n = len(all_data)
     queryset = UsersData.objects.filter(exported="NA", company__keyword__in=keywords)
     print(len(queryset))
 
-    # rows = []
-    # for item in queryset:
-    #     company_name = str(item.company)
-    #     employees = str(item.company.employees)
-    #     industry = str(item.company.industry)
-    #     domain = str(item.company.domain)
-    #     first_name = str(item.name).split(" ")[0]
-    #     try:
-    #         last_name = str(item.name).split(" ")[1]
-    #     except Exception as ex:
-    #         print(ex)
-    #         last_name = ""
-    #     row_data = [first_name, last_name, str(item.keyword), str(item.title), company_name, str(item.linkedin_url), str(item.location),
-    #                 employees, industry, domain]
-    #
-    #     print(row_data)
-    #     rows.append(row_data)
-    #     item.exported = "Yes"
-    #     item.save()
-    #
-    # print(len(rows))
-    # sheet.insert_rows(rows, 2 + n)
+    rows = []
+    for item in queryset:
+        company_name = str(item.company)
+        employees = str(item.company.employees)
+        industry = str(item.company.industry)
+        domain = str(item.company.domain)
+        email = item.valid_emails
+        first_name = str(item.name).split(" ")[0]
+        try:
+            last_name = str(item.name).split(" ")[1]
+        except Exception as ex:
+            print(ex)
+            last_name = ""
+        row_data = [first_name, last_name, str(item.keyword), str(item.title), company_name, str(item.linkedin_url), str(item.location),
+                    employees, industry, domain, email]
+
+        print(row_data)
+        rows.append(row_data)
+        item.exported = "Yes"
+        item.save()
+
+    print(len(rows))
+    sheet.insert_rows(rows, 2 + n)
 
 
 def add_note(driver, request_sent, message):

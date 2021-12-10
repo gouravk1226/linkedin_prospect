@@ -23,7 +23,7 @@ def find_users_valid_email(keywords):
             first_name = name[0]
             last_name = name[1]
 
-            website_url = user_obj.company__domain
+            website_url = user_obj.company.domain
             is_valid, domain = find_domain(website_url)
             print(i, is_valid, domain)
 
