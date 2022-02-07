@@ -22,7 +22,7 @@ def random_wait(a, b):
 
 def chrome_driver():
     # driver_location = "/usr/bin/chromedriver"
-    driver_location = "/home/sahil/.wdm/drivers/chromedriver/linux64/96.0.4664.45/chromedriver"
+    driver_location = "/home/gourav/Downloads/drivers/chromedriver"
     binary_location = "/usr/bin/google-chrome"
 
     options = webdriver.ChromeOptions()
@@ -192,8 +192,13 @@ def findProfiles(driver, company):
             results = int(driver.find_element_by_css_selector(CSS_SELECTOR['result']).text.split(" ")[0])
 
             for item in range(1, results + 1):
+                if results==1:
+                    try:
+                        target = driver.find_element_by_xpath(XPATHS['result'].format(1)).get_attribute('href')
+                    except:
+                        pass
                 try:
-                    target = driver.find_element_by_xpath(XPATHS['results'].format(2, item)).get_attribute('href')
+                    target = driver.find_element_by_xpath(XPATHS['results'].format(1, item)).get_attribute('href')
                 except:
                     target = driver.find_element_by_xpath(XPATHS['results'].format(3, item)).get_attribute('href')
                 if "headless" not in target:
@@ -209,7 +214,7 @@ def findProfiles(driver, company):
                             location = driver.find_element_by_css_selector(
                                 "span.text-body-small.inline.t-black--light.break-words").text
                         except Exception as ex:
-                            # print(ex)
+                            print(ex)
                             location = "Not Found"
                         profile_heading = driver.find_element_by_css_selector(CSS_SELECTOR['profile_heading']).text
                         position = job_title(driver, company_name, profile, False)
@@ -234,6 +239,7 @@ def findProfiles(driver, company):
                 driver.get(new_url)
                 randomWait(8, 12)
         except Exception as ex:
+            print(ex)
             # print(ex)
             pass
 
@@ -396,13 +402,14 @@ def companies_info(driver, sheet_name, tab_name):
 
 
 def scrapEmpsData(driver, is_premium):
-    # keywords = ["React Js-India-All"]
-    keywords = ["Linkedin-jobs-Reactjs", "Django", "JavaScript"]
+    # findProfiles(driver, 'company')
+    # keywords = ["adzuna"]
+    keywords = ["Linkedin-jobs-Reactjs", "Django", "JavaScript", "Indian_Startup_Result",'entracker','shine_Java']
     for keyword in keywords:
         all_companies = Companies.objects.filter(data_scrapped="No", keyword=keyword)
         print(len(all_companies))
 
-        for company in all_companies:
+        for company in all_companies[::-1]:
             driver.get(company.linkedin_url)
             randomWait(4, 10)
 
@@ -416,6 +423,7 @@ def scrapEmpsData(driver, is_premium):
                 pass
             company.data_scrapped = "Yes"
             company.save()
+
 
 
 def linkedinProfiles(driver, sheet_name, tab_name, column_number):
@@ -518,8 +526,8 @@ def extractValidEmails():
 def exportData(sheet_name, tab_name):
     keywords = ["Django", "Django-India-All", "Java-India-All",
                 "React Js-India-All", "Android-India-All", "Python-India-All",
-                "React Js-India-WeWorkRemotely", "React Js-India-RemoteOk", "JavaScript"
-                "Linkedin-jobs-Reactjs"]
+                "React Js-India-WeWorkRemotely", "React Js-India-RemoteOk", "JavaScript", "Indian_Startup_Result",
+                "Linkedin-jobs-Reactjs","entracker","java_script","android","django","react","node","adzuna","shine_Java"]
     companies = Companies.objects.filter(keyword__in=keywords)
     print(len(companies))
     all_data, sheet = sheet_data(sheet_name, tab_name)
